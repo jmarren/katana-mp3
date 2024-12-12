@@ -18,9 +18,9 @@ import (
 	"errors"
 	"io"
 
-	"github.com/hajimehoshi/go-mp3/internal/consts"
-	"github.com/hajimehoshi/go-mp3/internal/frame"
-	"github.com/hajimehoshi/go-mp3/internal/frameheader"
+	"github.com/jmarren/katana-mp3/consts"
+	"github.com/jmarren/katana-mp3/frame"
+	"github.com/jmarren/katana-mp3/frameheader"
 )
 
 // A Decoder is a MP3-decoded stream.
@@ -31,7 +31,7 @@ type Decoder struct {
 	sampleRate    int
 	length        int64
 	frameStarts   []int64
-	buf           []byte
+	Buf           []byte
 	frame         *frame.Frame
 	pos           int64
 	bytesPerFrame int64
@@ -50,19 +50,19 @@ func (d *Decoder) readFrame() error {
 		}
 		return err
 	}
-	d.buf = append(d.buf, d.frame.Decode()...)
+	d.Buf = append(d.Buf, d.frame.Decode()...)
 	return nil
 }
 
 // Read is io.Reader's Read.
-func (d *Decoder) Read(buf []byte) (int, error) {
-	for len(d.buf) == 0 {
+func (d *Decoder) Read(Buf []byte) (int, error) {
+	for len(d.Buf) == 0 {
 		if err := d.readFrame(); err != nil {
 			return 0, err
 		}
 	}
-	n := copy(buf, d.buf)
-	d.buf = d.buf[n:]
+	n := copy(Buf, d.Buf)
+	d.Buf = d.Buf[n:]
 	d.pos += int64(n)
 	return n, nil
 }
@@ -92,7 +92,7 @@ func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
 		return 0, errors.New("mp3: invalid whence")
 	}
 	d.pos = npos
-	d.buf = nil
+	d.Buf = nil
 	d.frame = nil
 	f := d.pos / d.bytesPerFrame
 	// If the frame is not first, read the previous ahead of reading that
@@ -108,7 +108,7 @@ func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
 		if err := d.readFrame(); err != nil {
 			return 0, err
 		}
-		d.buf = d.buf[d.bytesPerFrame+(d.pos%d.bytesPerFrame):]
+		d.Buf = d.Buf[d.bytesPerFrame+(d.pos%d.bytesPerFrame):]
 	} else {
 		if _, err := d.source.Seek(d.frameStarts[f], 0); err != nil {
 			return 0, err
@@ -116,7 +116,7 @@ func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
 		if err := d.readFrame(); err != nil {
 			return 0, err
 		}
-		d.buf = d.buf[d.pos:]
+		d.Buf = d.Buf[d.pos:]
 	}
 	return npos, nil
 }
