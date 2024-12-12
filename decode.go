@@ -37,7 +37,7 @@ type Decoder struct {
 	bytesPerFrame int64
 }
 
-func (d *Decoder) readFrame() error {
+func (d *Decoder) ReadFrame() error {
 	var err error
 	d.frame, _, err = frame.Read(d.source, d.source.pos, d.frame)
 	if err != nil {
@@ -57,7 +57,7 @@ func (d *Decoder) readFrame() error {
 // Read is io.Reader's Read.
 func (d *Decoder) Read(Buf []byte) (int, error) {
 	for len(d.Buf) == 0 {
-		if err := d.readFrame(); err != nil {
+		if err := d.ReadFrame(); err != nil {
 			return 0, err
 		}
 	}
@@ -102,10 +102,10 @@ func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
 		if _, err := d.source.Seek(d.frameStarts[f], 0); err != nil {
 			return 0, err
 		}
-		if err := d.readFrame(); err != nil {
+		if err := d.ReadFrame(); err != nil {
 			return 0, err
 		}
-		if err := d.readFrame(); err != nil {
+		if err := d.ReadFrame(); err != nil {
 			return 0, err
 		}
 		d.Buf = d.Buf[d.bytesPerFrame+(d.pos%d.bytesPerFrame):]
@@ -113,7 +113,7 @@ func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
 		if _, err := d.source.Seek(d.frameStarts[f], 0); err != nil {
 			return 0, err
 		}
-		if err := d.readFrame(); err != nil {
+		if err := d.ReadFrame(); err != nil {
 			return 0, err
 		}
 		d.Buf = d.Buf[d.pos:]
@@ -213,8 +213,8 @@ func NewDecoder(r io.Reader) (*Decoder, error) {
 	if err := s.skipTags(); err != nil {
 		return nil, err
 	}
-	// TODO: Is readFrame here really needed?
-	if err := d.readFrame(); err != nil {
+	// TODO: Is ReadFrame here really needed?
+	if err := d.ReadFrame(); err != nil {
 		return nil, err
 	}
 	freq, err := d.frame.SamplingFrequency()
